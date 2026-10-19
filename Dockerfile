@@ -6,8 +6,9 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     gcc \
     g++ \
+    gfortran \
     libopenblas-dev \
-    libfreetype6-dev \
+    liblapack-dev \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
