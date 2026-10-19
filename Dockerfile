@@ -1,15 +1,21 @@
-FROM python:3.12-alpine
+FROM python:3.12-slim
 
-# Տեղադրել mysqlclient-ի կոմպիլյացիայի համար անհրաժեշտ համակարգային կախվածությունները
-RUN apk add --no-cache gcc musl-dev mariadb-connector-c-dev
+RUN apt-get update && apt-get install -y \
+    default-libmysqlclient-dev \
+    build-essential \
+    pkg-config \
+    gcc \
+    g++ \
+    libopenblas-dev \
+    libfreetype6-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 COPY requirements.txt /app/
-
 RUN python -m pip install --upgrade pip
-# Տեղադրել mysqlclient-ը (ենթադրում եմ, որ այն արդեն գրված է requirements.txt-ում, հակառակ դեպքում ավելացրեք այստեղ)
-RUN pip install mysqlclient
+RUN pip install -r requirements.txt
+
 COPY . /app/
 
 EXPOSE 8000
