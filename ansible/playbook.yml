@@ -2,9 +2,10 @@
 - name: Deploy Django App via Docker
   hosts: webservers
   become: yes
-  serial: 1
+  serial: 1  # Updates one server at a time (rolling update)
 
   tasks:
+    # 1. Install Docker
     - name: Install Docker
       ansible.builtin.apt:
         name: docker.io
@@ -17,6 +18,7 @@
         state: started
         enabled: yes
 
+    # 2. Copy the project to the server
     - name: Create project directory on server
       ansible.builtin.file:
         path: /home/ubuntu/web_code
@@ -27,12 +29,33 @@
 
     - name: Copy project files to server
       ansible.builtin.copy:
-        src: ../.           # <--- The dot is crucial. It copies contents, not the folder.
+        src: ../
         dest: /home/ubuntu/web_code/
         owner: ubuntu
         group: ubuntu
         mode: '0755'
 
+    # 3. DEBUG TASKS: Find where the Dockerfile actually is
+    - name: Check files on server (Root level)
+      ansible.builtin.command: ls -la /home/ubuntu/web_code/
+      register: ls_root
+      changed_when: false
+
+    - name: Print Root Level Files
+      ansible.builtin.debug:
+        msg: "{{ ls_root.stdout_lines }}"
+
+    - name: Check if nested folder exists
+      ansible.builtin.command: ls -la /home/ubuntu/web_code/tuberculosis-detector/
+      register: ls_nested
+      ignore_errors: yes
+      changed_when: false
+
+    - name: Print Nested Folder Files
+      ansible.builtin.debug:
+        msg: "{{ ls_nested.stdout_lines | default(['Folder does not exist']) }}"
+
+    # 4. Build and Run the Docker container
     - name: Stop existing container (if any)
       community.docker.docker_container:
         name: my-django-app
@@ -44,7 +67,7 @@
         name: my-django-app
         source: build
         build:
-          path: /home/ubuntu/web_code  # <--- Exact same path as the copy destination
+          path: /home/ubuntu/web_code/tuberculosis-detector  # We will verify this with the debug output
           dockerfile: Dockerfile
         state: present
         force_source: yes
