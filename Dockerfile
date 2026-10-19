@@ -4,6 +4,7 @@ RUN apt-get update && apt-get install -y \
     default-libmysqlclient-dev \
     build-essential \
     pkg-config \
+    python3-dev \
     gcc \
     g++ \
     gfortran \
@@ -14,7 +15,11 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 COPY requirements.txt /app/
+
 RUN python -m pip install --upgrade pip
+
+RUN pip install mysqlclient==2.2.7
+
 RUN pip install -r requirements.txt
 
 COPY . /app/
