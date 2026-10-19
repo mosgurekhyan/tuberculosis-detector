@@ -2,10 +2,9 @@
 - name: Deploy Django App via Docker
   hosts: webservers
   become: yes
-  serial: 1  # Updates one server at a time (rolling update)
+  serial: 1
 
   tasks:
-    # 1. Install Docker (if not already installed)
     - name: Install Docker
       ansible.builtin.apt:
         name: docker.io
@@ -18,7 +17,6 @@
         state: started
         enabled: yes
 
-    # 2. Copy the project to the server
     - name: Create project directory on server
       ansible.builtin.file:
         path: /home/ubuntu/web_code
@@ -29,14 +27,12 @@
 
     - name: Copy project files to server
       ansible.builtin.copy:
-        src: ./  # Copies everything in your local folder
+        src: ../.           # <--- The dot is crucial. It copies contents, not the folder.
         dest: /home/ubuntu/web_code/
         owner: ubuntu
         group: ubuntu
         mode: '0755'
-      # Note: Ensure you exclude .git or other unnecessary folders if needed
 
-    # 3. Build and Run the Docker container
     - name: Stop existing container (if any)
       community.docker.docker_container:
         name: my-django-app
@@ -48,7 +44,8 @@
         name: my-django-app
         source: build
         build:
-          path: /home/ubuntu/web_code
+          path: /home/ubuntu/web_code  # <--- Exact same path as the copy destination
+          dockerfile: Dockerfile
         state: present
         force_source: yes
 
